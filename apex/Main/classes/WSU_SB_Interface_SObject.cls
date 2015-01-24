@@ -6,4 +6,5 @@ public interface WSU_SB_Interface_SObject extends Database.Batchable<sObject> {
     void setReserveForPostLoop(Database.BatchableContext bc, List<sObject> sobjs);
     void postLoop(Database.BatchableContext bc, List<sObject> sobjs);
     Map<String, Integer> reserve();
+    Map<String, Object> communicate(Map<String, Object> data);
 }

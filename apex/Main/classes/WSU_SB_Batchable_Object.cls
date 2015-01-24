@@ -101,6 +101,10 @@ public virtual class WSU_SB_Batchable_Object extends WSU_SB_Batchable implements
                 'implementationArgsData' => JSON.serialize(implementationArgs)
             }, (Integer)null, false, false, false, true);
             WSU_Kyou.doCommit();
+
+            Map<String, Object> dataBack = implementationObject.communicate(new Map<String, Object>{
+                'objsSkipped' => objsSkipped.size()
+            });
         }
         implementationObject.finish(bc);
     }

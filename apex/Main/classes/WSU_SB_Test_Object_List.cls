@@ -5,6 +5,7 @@
 
 public class WSU_SB_Test_Object_List implements WSU_SB_Interface_Object, Database.Stateful, Database.AllowsCallouts {
     public static String passback;
+    private Integer objsSkipped;
 
     static {
         staticInit();
@@ -121,9 +122,20 @@ public class WSU_SB_Test_Object_List implements WSU_SB_Interface_Object, Databas
         return passback;
     }
 
+    public Map<String, Object> communicate(Map<String, Object> data) {
+        if (data.containsKey('objsSkipped')) {
+            objsSkipped = (Integer)data.get('objsSkipped');
+        }
+        return null;
+    }
+
     public void finish(Database.BatchableContext bc) {
-        if (options != null && options.containsKey('passback_value')) {
-            passback = (String)options.get('passback_value');
+        if (options != null && options.containsKey('test_communicate') && objsSkipped > 0) {
+            passback = 'objsSkipped ' + String.valueOf(objsSkipped);
+        } else {
+            if (options != null && options.containsKey('passback_value')) {
+                passback = (String)options.get('passback_value');
+            }
         }
     }
 }

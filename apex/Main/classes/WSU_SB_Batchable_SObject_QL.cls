@@ -63,6 +63,10 @@ public virtual class WSU_SB_Batchable_SObject_QL extends WSU_SB_Batchable_SObjec
                 'implementationArgsData' => JSON.serialize(implementationArgs)
             }, (Integer)null, false, false, false, false);
             WSU_Kyou.doCommit();
+
+            Map<String, Object> dataBack = implementation.communicate(new Map<String, Object>{
+                'sobjsSkipped' => sobjsSkipped.size()
+            });
         }
         implementation.finish(bc);
     }

@@ -5,6 +5,7 @@
 
 public class WSU_SB_Test_SObject_List implements WSU_SB_Interface_SObject, Database.Stateful, Database.AllowsCallouts {
     public static String passback;
+    private Integer sobjsSkipped;
 
     static {
         staticInit();
@@ -101,9 +102,20 @@ public class WSU_SB_Test_SObject_List implements WSU_SB_Interface_SObject, Datab
         return passback;
     }
 
+    public Map<String, Object> communicate(Map<String, Object> data) {
+        if (data.containsKey('sobjsSkipped')) {
+            sobjsSkipped = (Integer)data.get('sobjsSkipped');
+        }
+        return null;
+    }
+
     public void finish(Database.BatchableContext bc) {
-        if (options != null && options.containsKey('passback_value')) {
-            passback = (String)options.get('passback_value');
+        if (options != null && options.containsKey('test_communicate') && sobjsSkipped > 0) {
+            passback = 'sobjsSkipped ' + String.valueOf(sobjsSkipped);
+        } else {
+            if (options != null && options.containsKey('passback_value')) {
+                passback = (String)options.get('passback_value');
+            }
         }
     }
 }

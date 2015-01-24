@@ -126,6 +126,42 @@ public class WSU_SBTest {
         System.assertEquals(entriesInDB.size(), 1);
     }
 
+    static testMethod void testEnqueueBatchNoArgsSObjectQLRecoverySetupCommunicate() {
+        if (WSU_Kyou.slotsAvailable() == 0) {
+            throw new WSU_SB.SB_Exception('I need at least one open Batch Apex slot to run this test.');
+        }
+        WSU_Kyou.setForceAdder(true); // Only needed in test to deal with blocking of enqueueJob() in
+                                      // WSU_Kyou.doCommit()
+        Test.startTest();
+        ID returned = WSU_SB.enqueueBatch(WSU_SB_Test_SObject_QL.class, null,
+            new Map<String, Object>{
+                'optionsData' => JSON.serialize(new Map<String, Object>{
+                    'save_postloop_failure' => true, // Inside WSU_SB_Test_SObject_QL, clears the Queries reservation
+                    'test_communicate' => true
+                })
+            },
+            new Map<String, Object>{
+                'Queries' => 2  // This will make the loop stop at 199
+            }, true, false
+        );
+        Test.stopTest();
+
+        Database.Batchable<sObject> impl = WSU_SB.latestImplementation;
+        System.assert(impl instanceof WSU_SB_Test_SObject_QL);
+        System.assertEquals(((WSU_SB_Test_SObject_QL)impl).getPassback(), 'sobjsSkipped 1');
+        List<Contact> cons = [select FirstName, LastName, Email from Contact];
+        System.assertEquals(cons.size(), 200);
+        Integer processed = 0;
+        for (Contact con : cons) {
+            if (con.Email == 'new@email.com') {
+                processed++;
+            }
+        }
+        System.assertEquals(processed, 199);
+        List<WSU_Kyou_QueueEntry__c> entriesInDB = [select Id from WSU_Kyou_QueueEntry__c];
+        System.assertEquals(entriesInDB.size(), 1);
+    }
+
     static testMethod void testEnqueueBatchNoArgsSObjectQLRecoverySetup_1FailBeforePostLoop() {
         if (WSU_Kyou.slotsAvailable() == 0) {
             throw new WSU_SB.SB_Exception('I need at least one open Batch Apex slot to run this test.');
@@ -408,6 +444,45 @@ public class WSU_SBTest {
         System.assertEquals(entriesInDB.size(), 1);
     }
 
+    static testMethod void testEnqueueBatchNoArgsObjectListRecoverySetupObjectListCommunicate() {
+        if (WSU_Kyou.slotsAvailable() == 0) {
+            throw new WSU_SB.SB_Exception('I need at least one open Batch Apex slot to run this test.');
+        }
+        WSU_Kyou.setForceAdder(true); // Only needed in test to deal with blocking of enqueueJob() in
+                                      // WSU_Kyou.doCommit()
+        Test.startTest();
+        ID returned = WSU_SB.enqueueBatch(WSU_SB_Test_Object_List.class, null,
+            new Map<String, Object>{
+                'optionsData' => JSON.serialize(new Map<String, Object>{
+                    'passback_value' => 'myownpassbackvalue', // This ends up getting ignored because test_communicate
+                                                              // is on
+                    'save_postloop_failure' => true, // Inside WSU_SB_Test_SObject_List, clears the Queries reservation
+                    'test_communicate' => true,
+                    'long' => true // Choose the long list of Strings as iterable
+                })
+            },
+            new Map<String, Object>{
+                'Queries' => 2  // This will make the loop stop after 198 Contacts, which is 199 queries (there's one in preLoop() too).
+            }, true, false, true
+        );
+        Test.stopTest();
+
+        Database.Batchable<Object> impl = WSU_SB.latestImplementationObject;
+        System.assert(impl instanceof WSU_SB_Test_Object_List);
+        System.assertEquals(((WSU_SB_Test_Object_List)impl).getPassback(), 'objsSkipped 2');
+        List<Contact> cons = [select FirstName, LastName, Email from Contact];
+        System.assertEquals(cons.size(), 200);
+        Integer processed = 0;
+        for (Contact con : cons) {
+            if (con.Email == 'fake@fake.com') {
+                processed++;
+            }
+        }
+        System.assertEquals(processed, 198);
+        List<WSU_Kyou_QueueEntry__c> entriesInDB = [select Id from WSU_Kyou_QueueEntry__c];
+        System.assertEquals(entriesInDB.size(), 1);
+    }
+
     static testMethod void testTestObjectListExecute() {
         Test.startTest();
         ID returned = WSU_Kyou.enqueueBatch(WSU_SB_Test_Object_List.class, null, null, null, true, false, false, true);
@@ -489,6 +564,44 @@ public class WSU_SBTest {
         Database.Batchable<sObject> impl = WSU_SB.latestImplementation;
         System.assert(impl instanceof WSU_SB_Test_SObject_List);
         System.assertEquals(((WSU_SB_Test_SObject_List)impl).getPassback(), 'myownpassbackvalue');
+        List<Contact> cons = [select FirstName, LastName, Email from Contact];
+        System.assertEquals(cons.size(), 200);
+        Integer processed = 0;
+        for (Contact con : cons) {
+            if (con.Email == 'new@email.com') {
+                processed++;
+            }
+        }
+        System.assertEquals(processed, 199);
+        List<WSU_Kyou_QueueEntry__c> entriesInDB = [select Id from WSU_Kyou_QueueEntry__c];
+        System.assertEquals(entriesInDB.size(), 1);
+    }
+
+    static testMethod void testEnqueueBatchNoArgsSObjectQLRecoverySetupSObjectListCommunicate() {
+        if (WSU_Kyou.slotsAvailable() == 0) {
+            throw new WSU_SB.SB_Exception('I need at least one open Batch Apex slot to run this test.');
+        }
+        WSU_Kyou.setForceAdder(true); // Only needed in test to deal with blocking of enqueueJob() in
+                                      // WSU_Kyou.doCommit()
+        Test.startTest();
+        ID returned = WSU_SB.enqueueBatch(WSU_SB_Test_SObject_List.class, null,
+            new Map<String, Object>{
+                'optionsData' => JSON.serialize(new Map<String, Object>{
+                    'passback_value' => 'myownpassbackvalue', // This ends up getting ignored because test_communicate
+                                                              // is on
+                    'save_postloop_failure' => true, // Inside WSU_SB_Test_SObject_List, clears the Queries reservation
+                    'test_communicate' => true
+                })
+            },
+            new Map<String, Object>{
+                'Queries' => 2  // This will make the loop stop at 199
+            }, true, true
+        );
+        Test.stopTest();
+
+        Database.Batchable<sObject> impl = WSU_SB.latestImplementation;
+        System.assert(impl instanceof WSU_SB_Test_SObject_List);
+        System.assertEquals(((WSU_SB_Test_SObject_List)impl).getPassback(), 'sobjsSkipped 1');
         List<Contact> cons = [select FirstName, LastName, Email from Contact];
         System.assertEquals(cons.size(), 200);
         Integer processed = 0;
