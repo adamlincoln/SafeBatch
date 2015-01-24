@@ -24,7 +24,7 @@ public virtual class WSU_SB_Batchable_SObject extends WSU_SB_Batchable {
     }
 
     public override void setImplementation() {
-        if (implementationType != null) { // We might run this method more than once because it gets called from init()
+        if (implementationType != null && this.implementation == null) { // We might run this method more than once because it gets called from init()
             if (implementationType.newInstance() instanceof WSU_SB_Interface_SObject) {
                 if (implementationArgs == null) {
                     this.implementation = (WSU_SB_Interface_SObject)implementationType.newInstance();
